@@ -65,9 +65,22 @@ This compiles the release executable and copies all required portable assets (`s
 You can move this `release` folder anywhere (USB drive, custom directory) and run `simple-jingle.exe` portably. To uninstall, simply delete the folder.
 
 ### Windows SmartScreen & Antivirus Note
-Because the pre-compiled releases are portable and unsigned, Windows SmartScreen or antivirus software may flag the executable as unrecognized when run for the first time.
-* To run the pre-built release, click **"More info"** on the SmartScreen dialog and select **"Run anyway"**.
-* Alternatively (and recommended for total trust), you can **build the executable yourself** from source using the steps above. This guarantees that only the audited code from this repository is compiled into your binary.
+Because the pre-compiled releases are portable and unsigned, Windows SmartScreen or antivirus software may flag the executable as unrecognized or malicious on first run.
+
+* **VirusTotal Audit:** https://www.virustotal.com/gui/file/a177ed14d7bcb6c38d0209c95082c9338993b4aa0512d1a6cf99170255bda8a4/detection
+  * *Microsoft (Defender):* Flags heuristically as `Trojan:Win32/Wacatac.B!ml` (False Positive)
+  * *Bkav Pro:* Flags as `W32.Malware.27B289C3` (False Positive)
+  * *SecureAge:* Flags as `Malicious` (False Positive)
+  * *Others (e.g., Acronis, Kaspersky, CrowdStrike):* 100% clean / Undetected.
+
+#### Why does it trigger flags like "Wacatac.B!ml"?
+Antivirus machine learning models (`!ml` indicates machine learning heuristic detection) flag this application due to its core keyboard integration patterns:
+1. **Low-Level Keyboard Hook (`WH_KEYBOARD_LL`):** The program registers a system-wide hook to detect trigger word completions. Heuristic engines flag this because keyboard hooks are heavily utilized by keylogger malware.
+2. **Background Subsytem (No Window):** The program is compiled without a standard console window (`#![windows_subsystem = "windows"]`) so it runs silently in the system tray. Unseen background processes that monitor keys resemble Trojan/stealth spyware behavior.
+3. **Active Window Auditing:** It uses Windows UI Automation and COM interfaces to query active foreground window titles and input fields (to instantly disable logging on password fields). Querying focus contexts across different applications is flagged by heuristic models.
+
+* **To run the pre-built release:** Click **"More info"** on the SmartScreen dialog and select **"Run anyway"** (or add an exception to your antivirus).
+* **To avoid flags completely:** We highly recommend you **build the executable yourself** from source using the steps above. This guarantees that only the audited code from this repository is compiled into your local binary, which prevents generic reputation flags.
 
 ## Verification & Testing
 
