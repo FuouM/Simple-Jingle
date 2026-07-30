@@ -64,6 +64,11 @@ This compiles the release executable and copies all required portable assets (`s
 
 You can move this `release` folder anywhere (USB drive, custom directory) and run `simple-jingle.exe` portably. To uninstall, simply delete the folder.
 
+### Windows SmartScreen & Antivirus Note
+Because the pre-compiled releases are portable and unsigned, Windows SmartScreen or antivirus software may flag the executable as unrecognized when run for the first time.
+* To run the pre-built release, click **"More info"** on the SmartScreen dialog and select **"Run anyway"**.
+* Alternatively (and recommended for total trust), you can **build the executable yourself** from source using the steps above. This guarantees that only the audited code from this repository is compiled into your binary.
+
 ## Verification & Testing
 
 Verify the security rules and memory zeroization programmatically using unit tests:
