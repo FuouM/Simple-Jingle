@@ -77,6 +77,12 @@ Verify the security rules and memory zeroization programmatically using unit tes
 cargo test
 ```
 
+## LLM Use Disclosure
+
+This repository was developed with assistant support from the following large language models:
+* **Xiaomi: MiMo-V2.5** via *OpenCode* — used for initial implementation plan and initial implementation.
+* **Gemini 3.5 Flash (Low)** via *Antigravity* — used for security audits, bug fixes, features, and overall code polish.
+
 ## License
 
 MIT
