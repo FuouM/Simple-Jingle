@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::ptr;
 use std::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 use muda::{Menu, MenuItem};
 use tray_icon::menu::MenuEvent;
@@ -45,6 +45,12 @@ struct DebugConfig {
 static CONFIG: OnceLock<Config> = OnceLock::new();
 static DEBUG_ENABLED: AtomicBool = AtomicBool::new(false);
 static AUDIO_ENABLED: AtomicBool = AtomicBool::new(true);
+
+struct AudioState {
+    _handle: rodio::MixerDeviceSink,
+    player: rodio::Player,
+}
+static AUDIO_STATE: OnceLock<Mutex<Option<AudioState>>> = OnceLock::new();
 
 fn parse_vk_code(s: &str) -> Option<u16> {
     let s = s.trim();
@@ -466,19 +472,32 @@ fn play_sound_async(config_path: String) {
             }
         };
 
-        let Ok(mut handle) = rodio::DeviceSinkBuilder::open_default_sink() else {
-            if DEBUG_ENABLED.load(Ordering::Relaxed) {
-                eprintln!("[Simple-Jingle] Could not open audio device");
+        let state_mutex = AUDIO_STATE.get_or_init(|| Mutex::new(None));
+        let mut state = state_mutex.lock().unwrap();
+
+        if state.is_none() {
+            match rodio::DeviceSinkBuilder::open_default_sink() {
+                Ok(mut handle) => {
+                    handle.log_on_drop(false);
+                    let player = rodio::Player::connect_new(handle.mixer());
+                    *state = Some(AudioState {
+                        _handle: handle,
+                        player,
+                    });
+                }
+                Err(e) => {
+                    if DEBUG_ENABLED.load(Ordering::Relaxed) {
+                        eprintln!("[Simple-Jingle] Could not open audio device: {:?}", e);
+                    }
+                    return;
+                }
             }
-            return;
-        };
+        }
 
-        handle.log_on_drop(false);
-
-        let player = rodio::Player::connect_new(handle.mixer());
-        player.append(source);
-
-        std::thread::sleep(std::time::Duration::from_secs(3));
+        if let Some(audio) = state.as_ref() {
+            audio.player.stop();
+            audio.player.append(source);
+        }
     });
 }
 
